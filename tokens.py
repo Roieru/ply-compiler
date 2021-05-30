@@ -29,3 +29,17 @@ tokens = list(reserved.values()) + [
 ]
 
 literals = ['-', '+', '*', '/', '^', '=', '>', '<', '(', ')', '{', '}', ';']
+
+t_EQUALS = r'=='
+
+t_NOTEQUALS = r'!='
+
+t_GTREQTHAN = r'>='
+
+t_LSSEQTHAN = r'<='
+
+t_NUMI = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
+
+t_NUMF = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+
+t_STR = r'\"([^\\\n]|(\\.))*?\"'
