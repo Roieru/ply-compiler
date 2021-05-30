@@ -43,3 +43,18 @@ t_NUMI = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
 t_NUMF = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
 t_STR = r'\"([^\\\n]|(\\.))*?\"'
+
+t_ignore = ' \t'
+
+def t_NEWLINE(t):
+	r'\n+'
+	t.lexer.lineno += len(t.value)
+
+def t_ID(t):
+    r'[A-Za-z_][\w_]*'
+    t.type = reserved.get(t.value, "ID")
+    return t
+
+def t_error(t):
+	print("Illegal character %s" % repr(t.value[0]))
+	t.lexer.skip(1)
