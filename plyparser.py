@@ -4,14 +4,66 @@ import plylexer
 import sys
 
 class Node:
-    def __init__(self,type,children=None,leaf=None):
+    def __init__(self,type,children=None):
         self.type = type
         if children:
             self.children = children
         else:
             self.children = [ ]
-        self.leaf = leaf
 
+def boolToTree(input):
+
+    stack = []
+    output = []
+    while(len(input) > 0):
+        e = input.pop(0)
+        if(e == "("):
+            stack.append(e)
+        elif(e == ")"):
+            while(len(stack) > 0 and stack[len(stack)-1] != "("):
+                output.append(stack.pop())
+            if(stack[len(stack)-1] == "("):
+                stack.pop()
+            else:
+                sys.exit("Error 2")
+        elif(e in ["and", "or"]):
+            if(len(stack) > 0 and stack[len(stack)-1] in ["and", "or"]):
+                output.append(stack.pop())
+            stack.append(e)
+        else:
+            output.append(e)
+    while(len(stack) > 0):
+        output.append(stack.pop())
+
+    stack = []
+    input = output
+
+    while(len(input) > 0):
+        e = input.pop(0)
+        if(isinstance(e, Node)):
+            stack.append(e)
+        elif(e == '('):
+            sys.exit("Error 2")
+        elif(e in ["and", "or"]):
+            if(len(stack) < 2):
+                sys.exit("Error 3")
+            else:
+                a2 = stack.pop()
+                if(not(isinstance(a2, Node))):
+                    a2 = Node(a2)
+                a1 = stack.pop()
+                if(not(isinstance(a1, Node))):
+                    a1 = Node(a1)
+                stack.append(Node(e,children=[a1, a2]))
+        else:
+            stack.append(e)
+    if(len(stack) != 1):
+        sys.exit("Error 3")
+    else:
+        e = stack.pop()
+        if(not(isinstance(e, Node))):
+            e = Node(e)
+        return e
 
 def hasGreaterPrecedence(a, b):
     if(a in "^"):
@@ -65,7 +117,11 @@ def treeFromInfix(input):
                 sys.exit("Error 3")
             else:
                 a2 = stack.pop()
+                if(not(isinstance(a2, Node))):
+                    a2 = Node(a2)
                 a1 = stack.pop()
+                if(not(isinstance(a1, Node))):
+                    a1 = Node(a1)
                 stack.append(Node(e,children=[a1, a2]))
         else:
             stack.append(e)
@@ -77,7 +133,6 @@ def treeFromInfix(input):
             e = Node(e)
         return e
 
-
 def p_block(p):
     '''
     block : stmt block
@@ -87,7 +142,6 @@ def p_block(p):
         p[0] = Node('block', children=[p[1], p[2]])
     else:
         p[0] = p[1]
-    treeFromInfix(['a'])
 
 def p_stmt(p):
     '''
@@ -100,20 +154,20 @@ def p_simpstmt_assdec(p):
     '''
     simpstmt : type ID '=' expr
     '''
-    d = Node('declaration', [p[2], p[1]])
+    d = Node('declaration', [Node(p[2]), p[1]])
     p[0] = Node('assignment', [d, p[4]])
 
 def p_simpstmt_dec(p):
     '''
     simpstmt : type ID
     '''
-    p[0] = Node('declaration', [p[2], p[1]])
+    p[0] = Node('declaration', [Node(p[2]), p[1]])
 
 def p_simpstmt_ass(p):
     '''
     simpstmt : ID '=' expr
     '''
-    p[0] = Node('assignment', [p[1], p[3]])
+    p[0] = Node('assignment', [Node(p[1]), p[3]])
 
 def p_type(p):
     '''
@@ -130,10 +184,15 @@ def p_expr_num(p):
     '''
     p[0] = treeFromInfix(p[1])
 
-def p_expr_other(p):
+def p_expr_str(p):
     '''
     expr : strexpr
-        | boolexpr
+    '''
+    p[0] = p[1]
+
+def p_expr_bool(p):
+    '''
+    expr : boolexpr
     '''
     p[0] = p[1]
 
@@ -163,7 +222,7 @@ def p_numexpr_num(p):
     '''
     numexpr : num
     '''
-    p[0] = p[1]
+    p[0] = [p[1]]
 
 def p_numexpr_arit(p):
     '''
@@ -204,32 +263,57 @@ def p_arit(p):
     '''
     p[0] = p[1]
 
-def p_strexpr(p):
+def p_strexpr_one(p):
     '''
     strexpr : concat
-        | concat '+' concat
-        | '(' concat ')'
     '''
-    pass
+    p[0] = p[1]
 
-def p_concat(p):
+def p_strexpr_concat(p):
+    '''
+    strexpr : concat '+' concat
+    '''
+    p[0] = Node('concat', [p[1], p[3]])
+
+def p_strexpr_par(p):
+    '''
+    strexpr : '(' strexpr ')'
+    '''
+    p[0] = Node(p[2])
+
+def p_concat_one(p):
     '''
     concat : STR
         | ID
-        | STRING '(' numexpr ')'
     '''
-    pass
+    p[0] = Node(p[1])
 
-def p_boolexpr(p):
+def p_concat_par(p):
     '''
-    boolexpr : boolop AND boolexpr
-        | boolop OR boolexpr
-        | boolop EQUALS boolexpr
-        | boolop NOTEQUALS boolexpr
-        | boolop
-        | '(' boolexpr ')'
+    concat : STRING '(' numexpr ')'
     '''
-    pass
+    p[0] = treeFromInfix(p[3])
+
+def p_boolexpr_bin(p):
+    '''
+    boolexpr : boolexpr AND boolexpr
+        | boolexpr OR boolexpr
+        | boolexpr EQUALS boolexpr
+        | boolexpr NOTEQUALS boolexpr
+    '''
+    p[0] = Node(p[2], [p[1], p[3]])
+
+def p_boolexpr_one(p):
+    '''
+    boolexpr : boolop
+    '''
+    p[0] = p[1]
+
+def p_boolexpr_par(p):
+    '''
+    boolexpr : '(' boolexpr ')'
+    '''
+    p[0] = p[2]
 
 def p_boolop(p):
     '''
@@ -237,7 +321,7 @@ def p_boolop(p):
         | numcomp
         | bool
     '''
-    pass
+    p[0] = p[1]
 
 def p_bool(p):
     '''
@@ -245,21 +329,21 @@ def p_bool(p):
         | FALSE
         | ID
     '''
-    pass
+    p[0] = Node(p[1])
 
 def p_strcomp(p):
     '''
     strcomp : strexpr NOTEQUALS strexpr
         | strexpr EQUALS strexpr
     '''
-    pass
+    p[0] = Node(p[2], [p[1], p[3]])
 
 def p_numcomp(p):
     '''
     numcomp : numexpr comp numexpr
     '''
-    pass
-
+    p[0] = Node(p[2], [treeFromInfix(p[1]), treeFromInfix(p[3])])
+        
 def p_comp(p):
     '''
     comp : EQUALS
@@ -269,7 +353,7 @@ def p_comp(p):
         | '<'
         | '>'
     '''
-    pass
+    p[0] = p[1]
 
 def p_empty(p):
     'empty :'
@@ -283,13 +367,12 @@ parserer = yacc.yacc()
 root = parserer.parse(lexer=plylexer.lx, input=open("input.txt").read())
 
 def printChildren(node):
-    if hasattr(node, "type"):
-        print(node.type)
-    else:
-        print(node)
-    if hasattr(node, "children") and node.children:
+    print(node.type)
+    if node.children:
         for i in node.children:
             printChildren(i)
+
+#printChildren(boolToTree(['true', 'and', '(','false', 'or', 'false', ')']))
 
 #root = treeFromInfix(['4', '-', '5'])
 
