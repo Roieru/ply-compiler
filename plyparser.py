@@ -196,27 +196,54 @@ def p_expr_bool(p):
     '''
     p[0] = p[1]
 
-def p_flowctrl(p):
+def p_flowctrl_for(p):
     '''
     flowctrl : FOR '(' simpstmt ';' boolexpr ';' simpstmt ')' '{' block '}'
-        | DO '{' block '}' WHILE '(' boolexpr ')' ';'
-        | WHILE '(' boolexpr ')' '{' block '}'
-        | IF '(' boolexpr ')' '{' block '}' elif else
     '''
-    pass
+    p[0] = Node('for', [p[3], p[5], p[7], p[10]])
+
+def p_flowctrl_dowhile(p):
+    '''
+    flowctrl : DO '{' block '}' WHILE '(' boolexpr ')' ';'
+    '''
+    p[0] = Node('dowh', [p[3], p[7]])
+
+def p_flowctrl_while(p):
+    '''
+    flowctrl : WHILE '(' boolexpr ')' '{' block '}'
+    '''
+    p[0] = Node('while', [p[3], p[6]])
+
+def p_flowctrl_if(p):
+    '''
+    flowctrl : IF '(' boolexpr ')' '{' block '}' elif else
+    '''
+    if(len(p) > 2):
+        ch = [p[3], p[6]]
+        if(p[8]):
+            ch.append(p[8])
+        if(p[9]):
+            ch.append(p[9])
+        p[0] = Node('if', children=ch)
 
 def p_elif(p):
     '''
     elif : ELIF '(' boolexpr ')' '{' block '}' elif
         | empty
     '''
-    pass
+    if(len(p) > 2):
+        ch = [p[3], p[6]]
+        if(p[8]):
+            ch.append(p[8])
+        p[0] = Node('elif', children=ch)
 
 def p_else(p):
     '''
     else : ELSE '{' block '}'
+        | empty
     '''
-    pass
+    if(len(p) > 2):
+        p[0] = p[3]
 
 def p_numexpr_num(p):
     '''
