@@ -332,7 +332,7 @@ def p_strexpr_one(p):
 
 def p_strexpr_concat(p):
     '''
-    strexpr : concat '+' concat
+    strexpr : concat '+' strexpr
     '''
     p[0] = Node('concat', [p[1], p[3]])
     setParentOfChildren(p[0])

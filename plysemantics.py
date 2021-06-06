@@ -1,6 +1,7 @@
 from plyparser import Node, root, printChildren
 import sys
 import re
+import copy
 
 class VariablePLY:
     def __init__(self,value,typ):
@@ -77,13 +78,34 @@ def treeNumTypeCheck(node):
         else:
             if(not isWithinScope(node, node.type)):
                 sys.exit("Variable " + node.type + " has not been declared.")
-            node.ptype = getVarType(node, node.type)
+            varType = getVarType(node, node.type)
+            if varType == "string" or varType == "boolean":
+                sys.exit("Invalid operation.")
+            node.ptype = varType
+    #print(node.type + " is " + node.ptype)
+
+def treeStrTypeCheck(node):
+    if node.type == "num2string":
+        treeNumTypeCheck(node.children[0])
+        node.type = node.children[0].ptype + "2string"
+        node.ptype = "string"
+    elif not node.children:
+        if not re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.type):
+            if not isWithinScope(node, node.type):
+                sys.exit("Variable " + node.type + " has not been declared.")
+            varType = getVarType(node, node.type)
+            if varType != "string":
+                sys.exit("Invalid operation.")
+        node.ptype = "string"
+    else:
+        for child in node.children:
+            treeStrTypeCheck(child)
 
 def setVariables(r):
     if(r.type == "declaration"):
         if isWithinScope(r, r.children[0].type):
             sys.exit("Variable " + r.children[0].type + " has already been declared within scope.")
-        print(r.children[0].type + " declared as " + r.children[1].type + " inside a " + findScopeNode(r).type)
+        #print(r.children[0].type + " declared as " + r.children[1].type + " inside a " + findScopeNode(r).type)
         scopeNode = findScopeNode(r)
         if scopeNode in variables.keys():
             variables[scopeNode].append(VariablePLY(r.children[0].type, r.children[1].type))
@@ -103,8 +125,11 @@ def semanticAnalysis(r):
             correctType = r.children[0].children[1].type
         elif (not isWithinScope(r, r.children[0].type)):
             sys.exit("Variable " + r.children[0].type + " has not been declared.")
-    elif(r.type in ["+", "-", "/", "*", "^"]):
+    elif(r.type in ["+", "-", "/", "*", "^"] or re.match(r'-?\d+([uU]|[lL]|[uU][lL]|[lL][uU])?', r.type)):
         treeNumTypeCheck(r)
+        checkChildren = False
+    elif(r.type in ["concat", "num2string"] or re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', r.type)):
+        treeStrTypeCheck(r)
         checkChildren = False
     if r.children and checkChildren:
         for child in r.children:
