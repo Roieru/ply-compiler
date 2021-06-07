@@ -77,10 +77,10 @@ def treeNumTypeCheck(node):
             node.ptype = "float"
         else:
             if(not isWithinScope(node, node.type)):
-                sys.exit("Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
             varType = getVarType(node, node.type)
             if varType == "string" or varType == "boolean":
-                sys.exit("Invalid operation.")
+                sys.exit("[ ! ] Can't convert " + varType + " to number.")
             node.ptype = varType
     #print(node.type + " is " + node.ptype)
 
@@ -92,12 +92,12 @@ def treeStrTypeCheck(node):
     elif not node.children:
         if not re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.type):
             if not re.fullmatch(r'[A-Za-z_][\w_]*', node.type):
-                sys.exit("Invalid operation.")
+                sys.exit("[ ! ] Can't convert "+ node.type + "to string.")
             if not isWithinScope(node, node.type):
-                sys.exit("Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
             varType = getVarType(node, node.type)
             if varType != "string":
-                sys.exit("Invalid operation.")
+                sys.exit("[ ! ] Can't convert " + node.type + "to string.")
         node.ptype = "string"
     else:
         for child in node.children:
@@ -107,11 +107,10 @@ def treeBoolTypeCheck(node):
     if not node.children:
         if node.type != "true" and node.type != "false":
             if not isWithinScope(node, node.type):
-                sys.exit("Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
             varType = getVarType(node, node.type)
             if varType != "boolean":
-                sys.exit("Invalid operation.")
-        node.ptype = "boolean"
+                sys.exit("[ ! ] Can't convert " + varType + " to boolean.")
     elif node.type in ["==", "!="]:
         if(node.children[0].type in ["+", "-", "/", "*", "^"] or re.match(r'-?\d+([uU]|[lL]|[uU][lL]|[lL][uU])?', node.children[0].type)):
             treeNumTypeCheck(node.children[0])
@@ -119,7 +118,7 @@ def treeBoolTypeCheck(node):
         elif(node.children[0].type in ["concat", "num2string"] or re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.children[0].type)):
             treeStrTypeCheck(node.children[0])
             treeStrTypeCheck(node.children[1])
-        elif(node.children[0].type in ["==", "!=", "<", ">", ">=", "<=", "and", "or"]):
+        elif(node.children[0].type in ["==", "!=", "<", ">", ">=", "<=", "and", "or", "true", "false"]):
             treeBoolTypeCheck(node.children[0])
             treeBoolTypeCheck(node.children[1])
         else:
@@ -131,14 +130,20 @@ def treeBoolTypeCheck(node):
             elif child0Type == "boolean":
                 treeBoolTypeCheck(node.children[1])
             else:
-                sys.exit("Invalid operation.")
+                sys.exit("[ ! ] Variable " + node.children[0].type + " has not been declared.")
+    elif node.type in [">", "<", ">=", "<="]:
+        treeNumTypeCheck(node.children[0])
+        treeNumTypeCheck(node.children[1])
+    elif node.type in ["and", "or"]:
+            treeBoolTypeCheck(node.children[0])
+            treeBoolTypeCheck(node.children[1])
 
-        node.ptype = "boolean"
+    node.ptype = "boolean"
 
 def setVariables(r):
     if(r.type == "declaration"):
         if isWithinScope(r, r.children[0].type):
-            sys.exit("Variable " + r.children[0].type + " has already been declared within scope.")
+            sys.exit("[ ! ] Variable " + r.children[0].type + " has already been declared within scope.")
         #print(r.children[0].type + " declared as " + r.children[1].type + " inside a " + findScopeNode(r).type)
         scopeNode = findScopeNode(r)
         if scopeNode in variables.keys():
@@ -158,14 +163,13 @@ def semanticAnalysis(r):
         if r.children[0].type == "declaration":
             correctType = r.children[0].children[1].type
         elif (not isWithinScope(r, r.children[0].type)):
-            sys.exit("Variable " + r.children[0].type + " has not been declared.")
+            sys.exit("[ ! ] Variable " + r.children[0].type + " has not been declared.")
         else:
-            correctType = r.children[0].type
-        
+            correctType = getVarType(r, r.children[0].type)
         if correctType == "int" or correctType == "float":
             treeNumTypeCheck(r.children[1])
             if r.children[1].ptype != correctType:
-                sys.exit("Invalid operation.")
+                sys.exit("[ ! ] Can't convert " + r.children[1].ptype + " to " + correctType + ".")
         elif correctType == "string":
             treeStrTypeCheck(r.children[1])
         elif correctType == "boolean":
@@ -185,6 +189,6 @@ def semanticAnalysis(r):
             semanticAnalysis(child)
 
 #printVariables(root)
-printChildren(root)
 setVariables(root)
 semanticAnalysis(root)
+printChildren(root)

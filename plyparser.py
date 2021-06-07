@@ -461,6 +461,8 @@ def p_error(p):
 parserer = yacc.yacc()
 
 root = parserer.parse(lexer=plylexer.lx, input=open("input.txt").read())
+if root == None:
+    sys.exit("[ ! ] Syntax error.")
 
 def printChildren(node):
     print(node.type)
