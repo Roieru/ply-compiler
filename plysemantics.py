@@ -91,6 +91,8 @@ def treeStrTypeCheck(node):
         node.ptype = "string"
     elif not node.children:
         if not re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.type):
+            if not re.fullmatch(r'[A-Za-z_][\w_]*', node.type):
+                sys.exit("Invalid operation.")
             if not isWithinScope(node, node.type):
                 sys.exit("Variable " + node.type + " has not been declared.")
             varType = getVarType(node, node.type)
@@ -100,6 +102,38 @@ def treeStrTypeCheck(node):
     else:
         for child in node.children:
             treeStrTypeCheck(child)
+
+def treeBoolTypeCheck(node):
+    if not node.children:
+        if node.type != "true" and node.type != "false":
+            if not isWithinScope(node, node.type):
+                sys.exit("Variable " + node.type + " has not been declared.")
+            varType = getVarType(node, node.type)
+            if varType != "boolean":
+                sys.exit("Invalid operation.")
+        node.ptype = "boolean"
+    elif node.type in ["==", "!="]:
+        if(node.children[0].type in ["+", "-", "/", "*", "^"] or re.match(r'-?\d+([uU]|[lL]|[uU][lL]|[lL][uU])?', node.children[0].type)):
+            treeNumTypeCheck(node.children[0])
+            treeNumTypeCheck(node.children[1])
+        elif(node.children[0].type in ["concat", "num2string"] or re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.children[0].type)):
+            treeStrTypeCheck(node.children[0])
+            treeStrTypeCheck(node.children[1])
+        elif(node.children[0].type in ["==", "!=", "<", ">", ">=", "<=", "and", "or"]):
+            treeBoolTypeCheck(node.children[0])
+            treeBoolTypeCheck(node.children[1])
+        else:
+            child0Type = getVarType(node, node.children[0].type)
+            if child0Type == "float" or child0Type == "int":
+                treeNumTypeCheck(node.children[1])
+            elif child0Type == "string":
+                treeStrTypeCheck(node.children[1])
+            elif child0Type == "boolean":
+                treeBoolTypeCheck(node.children[1])
+            else:
+                sys.exit("Invalid operation.")
+
+        node.ptype = "boolean"
 
 def setVariables(r):
     if(r.type == "declaration"):
@@ -125,17 +159,32 @@ def semanticAnalysis(r):
             correctType = r.children[0].children[1].type
         elif (not isWithinScope(r, r.children[0].type)):
             sys.exit("Variable " + r.children[0].type + " has not been declared.")
+        else:
+            correctType = r.children[0].type
+        
+        if correctType == "int" or correctType == "float":
+            treeNumTypeCheck(r.children[1])
+            if r.children[1].ptype != correctType:
+                sys.exit("Invalid operation.")
+        elif correctType == "string":
+            treeStrTypeCheck(r.children[1])
+        elif correctType == "boolean":
+            treeBoolTypeCheck(r.children[1])
+        checkChildren = False
     elif(r.type in ["+", "-", "/", "*", "^"] or re.match(r'-?\d+([uU]|[lL]|[uU][lL]|[lL][uU])?', r.type)):
         treeNumTypeCheck(r)
         checkChildren = False
     elif(r.type in ["concat", "num2string"] or re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', r.type)):
         treeStrTypeCheck(r)
         checkChildren = False
+    elif(r.type in ["==", "!=", "<", ">", ">=", "<=", "and", "or", "true", "false"]):
+        treeBoolTypeCheck(r)
+        checkChildren = False
     if r.children and checkChildren:
         for child in r.children:
             semanticAnalysis(child)
 
 #printVariables(root)
+printChildren(root)
 setVariables(root)
 semanticAnalysis(root)
-printChildren(root)

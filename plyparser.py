@@ -369,6 +369,34 @@ def p_boolexpr_bin(p):
     p[0] = Node(p[2], [p[1], p[3]])
     setParentOfChildren(p[0])
 
+def p_boolexpr_idstr(p):
+    '''
+    boolexpr : ID EQUALS strexpr
+        | ID NOTEQUALS strexpr
+    '''
+    p[0] = Node(p[2], [Node(p[1]), p[3]])
+    setParentOfChildren(p[0])
+
+def p_boolexpr_idnum(p):
+    '''
+    boolexpr : ID EQUALS numexpr
+        | ID NOTEQUALS numexpr
+        | ID GTREQTHAN numexpr
+        | ID LSSEQTHAN numexpr
+        | ID '<' numexpr
+        | ID '>' numexpr
+    '''
+    p[0] = Node(p[2], [Node(p[1]), treeFromInfix(p[3])])
+    setParentOfChildren(p[0])
+
+def p_boolexpr_idbool(p):
+    '''
+    boolexpr : ID EQUALS boolexpr
+        | ID NOTEQUALS boolexpr
+    '''
+    p[0] = Node(p[2], [Node(p[1]), p[3]])
+    setParentOfChildren(p[0])
+
 def p_boolexpr_one(p):
     '''
     boolexpr : boolop
