@@ -296,6 +296,20 @@ def p_numexpr_arit(p):
     for i in p[3]:
         p[0].append(i)
 
+def p_numexpr_id(p):
+    '''
+    numexpr : ID '+' numexpr
+        | ID '*' numexpr
+        | ID '-' numexpr
+        | ID '/' numexpr
+        | ID '^' numexpr
+    '''
+    p[0] = []
+    p[0].append(p[1])
+    p[0].append(p[2])
+    for i in p[3]:
+        p[0].append(i)
+
 def p_numexpr_par(p):
     '''
     numexpr : '(' numexpr ')'
@@ -335,6 +349,13 @@ def p_strexpr_concat(p):
     strexpr : concat '+' strexpr
     '''
     p[0] = Node('concat', [p[1], p[3]])
+    setParentOfChildren(p[0])
+
+def p_strexpr_id(p):
+    '''
+    strexpr : ID '+' strexpr
+    '''
+    p[0] = Node('concat', [Node(p[1]), p[3]])
     setParentOfChildren(p[0])
 
 def p_strexpr_par(p):
@@ -456,6 +477,7 @@ def p_empty(p):
     pass
 
 def p_error(p):
+    sys.exit("[ ! ] Syntax error.")
     pass
 
 parserer = yacc.yacc()

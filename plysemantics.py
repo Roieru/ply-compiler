@@ -30,6 +30,13 @@ def findScopeNode(node):
         return findScopeNode(node.parent)
     return Node('Self')
 
+def isVarInTree(node, varName):
+    if node.children:
+        for child in node.children:
+            isVarInTree(child, varName)
+    elif node.type == varName:
+        sys.exit("[ ! ] Invalid assignment.")
+
 def printVariables(r):
     if r.type == "declaration":
         print(r.children[0].type + " declared as " + r.children[1].type + " inside a " + findScopeNode(r).type)
@@ -57,6 +64,8 @@ def isWithinScope(node, varName):
 
 def treeNumTypeCheck(node):
     if node.children:
+        if not node.type in ["+", "-", "/", "*", "^"]:
+            sys.exit("[ ! ] Invalid number assignment.")
         for child in node.children:
             treeNumTypeCheck(child)
         if node.children[0].ptype == node.children[1].ptype:
@@ -77,7 +86,7 @@ def treeNumTypeCheck(node):
             node.ptype = "float"
         else:
             if(not isWithinScope(node, node.type)):
-                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared within scope.")
             varType = getVarType(node, node.type)
             if varType == "string" or varType == "boolean":
                 sys.exit("[ ! ] Can't convert " + varType + " to number.")
@@ -92,14 +101,16 @@ def treeStrTypeCheck(node):
     elif not node.children:
         if not re.fullmatch(r'\"([^\\\n]|(\\.))*?\"', node.type):
             if not re.fullmatch(r'[A-Za-z_][\w_]*', node.type):
-                sys.exit("[ ! ] Can't convert "+ node.type + "to string.")
+                sys.exit("[ ! ] Can't convert "+ node.type + " to string.")
             if not isWithinScope(node, node.type):
-                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared within scope.")
             varType = getVarType(node, node.type)
             if varType != "string":
-                sys.exit("[ ! ] Can't convert " + node.type + "to string.")
+                sys.exit("[ ! ] Can't convert " + varType + " to string.")
         node.ptype = "string"
     else:
+        if node.type != "concat":
+            sys.exit("[ ! ] Invalid string assignment.")
         for child in node.children:
             treeStrTypeCheck(child)
 
@@ -107,7 +118,7 @@ def treeBoolTypeCheck(node):
     if not node.children:
         if node.type != "true" and node.type != "false":
             if not isWithinScope(node, node.type):
-                sys.exit("[ ! ] Variable " + node.type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.type + " has not been declared within scope.")
             varType = getVarType(node, node.type)
             if varType != "boolean":
                 sys.exit("[ ! ] Can't convert " + varType + " to boolean.")
@@ -130,7 +141,7 @@ def treeBoolTypeCheck(node):
             elif child0Type == "boolean":
                 treeBoolTypeCheck(node.children[1])
             else:
-                sys.exit("[ ! ] Variable " + node.children[0].type + " has not been declared.")
+                sys.exit("[ ! ] Variable " + node.children[0].type + " has not been declared within scope.")
     elif node.type in [">", "<", ">=", "<="]:
         treeNumTypeCheck(node.children[0])
         treeNumTypeCheck(node.children[1])
@@ -162,13 +173,20 @@ def semanticAnalysis(r):
         correctType = ""
         if r.children[0].type == "declaration":
             correctType = r.children[0].children[1].type
+            varName = r.children[0].children[0].type
+            isVarInTree(r.children[1], varName)
         elif (not isWithinScope(r, r.children[0].type)):
-            sys.exit("[ ! ] Variable " + r.children[0].type + " has not been declared.")
+            sys.exit("[ ! ] Variable " + r.children[0].type + " has not been declared within scope.")
         else:
             correctType = getVarType(r, r.children[0].type)
         if correctType == "int" or correctType == "float":
             treeNumTypeCheck(r.children[1])
-            if r.children[1].ptype != correctType:
+            if correctType == "float" and r.children[1].ptype == "int":
+                parseNode = Node('int2float', ptype="float")
+                r.children[1].parent = parseNode
+                parseNode.children = [r.children[1]]
+                r.children[1] = parseNode
+            elif r.children[1].ptype != correctType:
                 sys.exit("[ ! ] Can't convert " + r.children[1].ptype + " to " + correctType + ".")
         elif correctType == "string":
             treeStrTypeCheck(r.children[1])
