@@ -362,7 +362,7 @@ def p_strexpr_par(p):
     '''
     strexpr : '(' strexpr ')'
     '''
-    p[0] = Node(p[2])
+    p[0] = p[2]
 
 def p_concat_one(p):
     '''
