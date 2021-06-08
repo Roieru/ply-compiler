@@ -21,9 +21,9 @@ def generateTAC(node):
         generateTAC(node.children[0])
         generateTAC(node.children[1])
         print(tNodes[node.children[0]] + " := " + tNodes[node.children[1]])
-    elif node.type == "int2float":
+    elif node.type in ["int2float", "int2string", "float2string"]:
         generateTAC(node.children[0])
-        print("t" + str(tCounter) + " := int2float(" + tNodes[node.children[0]] + ")")
+        print("t" + str(tCounter) + " := " + node.type + "(" + tNodes[node.children[0]] + ")")
         tNodes[node] = "t" + str(tCounter)
         tCounter += 1
     elif node.type in ["+", "-", "/", "*", "^", "and", "or", "!=", "==", "<", ">", ">=", "<=", "concat"]:
@@ -33,6 +33,11 @@ def generateTAC(node):
         tNodes[node] = "t" + str(tCounter)
         tCounter += 1
     elif not node.children:
-        tNodes[node] = node.type
+        if node.type[0] == "-":
+            print("t" + str(tCounter) + " := 0 - " + node.type[1:])
+            tNodes[node] = "t" + str(tCounter)
+            tCounter += 1
+        else:
+            tNodes[node] = node.type
 
 generateTAC(root)

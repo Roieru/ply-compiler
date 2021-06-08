@@ -85,9 +85,12 @@ def treeNumTypeCheck(node):
         elif(re.fullmatch(r'-?((\d+)(\.\d+)(e(\+|-)?(\d+))?|(\d+)e(\+|-)?(\d+))([lL]|[fF])?', node.type)):
             node.ptype = "float"
         else:
-            if(not isWithinScope(node, node.type)):
+            if((node.type[0] == "-" and not isWithinScope(node, node.type[1:])) or (node.type[0] != "-" and not isWithinScope(node, node.type))):
                 sys.exit("[ ! ] Variable " + node.type + " has not been declared within scope.")
-            varType = getVarType(node, node.type)
+            if(node.type[0] == "-"):
+                varType = getVarType(node, node.type[1:])
+            else:
+                varType = getVarType(node, node.type)
             if varType == "string" or varType == "boolean":
                 sys.exit("[ ! ] Can't convert " + varType + " to number.")
             node.ptype = varType

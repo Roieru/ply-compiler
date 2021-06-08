@@ -328,6 +328,14 @@ def p_num(p):
     '''
     p[0] = p[1]
 
+def p_num_neg(p):
+    '''
+    num : '-' NUMI
+        | '-' NUMF
+        | '-' ID
+    '''
+    p[0] = p[1] + p[2]
+
 def p_arit(p):
     '''
     arit : '+'
