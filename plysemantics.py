@@ -209,4 +209,4 @@ def semanticAnalysis(r):
 #printVariables(root)
 setVariables(root)
 semanticAnalysis(root)
-printChildren(root)
+#printChildren(root)
