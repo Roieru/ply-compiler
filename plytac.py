@@ -86,6 +86,17 @@ def generateTAC(node):
             generateTAC(node.children[2])
         if(len(node.children) > 3):
             generateTAC(node.children[3])
+    elif node.type == "while":
+        generateTAC(node.children[0])
+        print("\nL" + str(lCounter))
+        print("if (" + tNodes[node.children[0]] + ") goto L" + str(lCounter+1))
+        print("goto L" + str(lCounter + 2))
+        print("\nL" + str(lCounter+1))
+        saveLCount = lCounter
+        lCounter += 3
+        generateTAC(node.children[1])
+        print("goto L" + str(saveLCount))
+        print("\nL" + str(saveLCount + 2))
 
     elif not node.children:
         if node.type[0] == "-":
@@ -95,5 +106,5 @@ def generateTAC(node):
         else:
             tNodes[node] = node.type
 
-printChildren(root)
+#printChildren(root)
 generateTAC(root)
