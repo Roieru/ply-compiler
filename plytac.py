@@ -97,7 +97,13 @@ def generateTAC(node):
         generateTAC(node.children[1])
         print("goto L" + str(saveLCount))
         print("\nL" + str(saveLCount + 2))
-
+    elif node.type == "dowh":
+        print("\nL" + str(lCounter))
+        saveLCount = lCounter
+        lCounter += 1
+        generateTAC(node.children[0])
+        generateTAC(node.children[1])
+        print("if (" + tNodes[node.children[1]] + ") goto L" + str(saveLCount))
     elif not node.children:
         if node.type[0] == "-":
             print("t" + str(tCounter) + " := 0 - " + node.type[1:])
