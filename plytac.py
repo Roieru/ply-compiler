@@ -104,6 +104,23 @@ def generateTAC(node):
         generateTAC(node.children[0])
         generateTAC(node.children[1])
         print("if (" + tNodes[node.children[1]] + ") goto L" + str(saveLCount))
+    elif node.type == "for":
+        generateTAC(node.children[0])
+        print("\nL" + str(lCounter))
+        saveLCount = lCounter
+        lCounter += 1
+        generateTAC(node.children[1])
+        print("\nL" + str(lCounter))
+        print("if (" + tNodes[node.children[1]] + ") goto L" + str(lCounter + 1))
+        print("goto L" + str(lCounter + 2))
+        print("\nL" + str(lCounter + 1))
+        saveLCount2 = lCounter
+        lCounter += 3
+        generateTAC(node.children[3])
+        generateTAC(node.children[2])
+        print("goto L" + str(saveLCount))
+        print("\nL" + str(saveLCount2 + 2))
+
     elif not node.children:
         if node.type[0] == "-":
             print("t" + str(tCounter) + " := 0 - " + node.type[1:])
