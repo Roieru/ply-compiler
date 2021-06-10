@@ -37,7 +37,7 @@ def boolToTree(input):
             if(stack[len(stack)-1] == "("):
                 stack.pop()
             else:
-                sys.exit("Error 2")
+                sys.exit('\033[91m' + "[ ! ] Invalid boolean expression" + '\033[0m')
         elif(e in ["and", "or"]):
             if(len(stack) > 0 and stack[len(stack)-1] in ["and", "or"]):
                 output.append(stack.pop())
@@ -55,10 +55,10 @@ def boolToTree(input):
         if(isinstance(e, Node)):
             stack.append(e)
         elif(e == '('):
-            sys.exit("Error 2")
+            sys.exit('\033[91m' + "[ ! ] Invalid boolean expression" + '\033[0m')
         elif(e in ["and", "or"]):
             if(len(stack) < 2):
-                sys.exit("Error 3")
+                sys.exit('\033[91m' + "[ ! ] Invalid boolean expression" + '\033[0m')
             else:
                 a2 = stack.pop()
                 if(not(isinstance(a2, Node))):
@@ -72,7 +72,7 @@ def boolToTree(input):
         else:
             stack.append(e)
     if(len(stack) != 1):
-        sys.exit("Error 3")
+        sys.exit('\033[91m' + "[ ! ] Invalid boolean expression" + '\033[0m')
     else:
         e = stack.pop()
         if(not(isinstance(e, Node))):
@@ -105,7 +105,7 @@ def treeFromInfix(input):
             if(stack[len(stack)-1] == "("):
                 stack.pop()
             else:
-                sys.exit("Error 2")
+                sys.exit('\033[91m' + "[ ! ] Invalid number expression" + '\033[0m')
         elif(e in "+-/*^"):
             while(len(stack) > 0 and hasGreaterPrecedence(stack[len(stack)-1],e)):
                 output.append(stack.pop())
@@ -125,10 +125,10 @@ def treeFromInfix(input):
         if(isinstance(e, Node)):
             stack.append(e)
         elif(e == '('):
-            sys.exit("Error 2")
+            sys.exit('\033[91m' + "[ ! ] Invalid number expression" + '\033[0m')
         elif(e in "+-*/^"):
             if(len(stack) < 2):
-                sys.exit("Error 3")
+                sys.exit('\033[91m' + "[ ! ] Invalid number expression" + '\033[0m')
             else:
                 a2 = stack.pop()
                 if(not(isinstance(a2, Node))):
@@ -142,7 +142,7 @@ def treeFromInfix(input):
         else:
             stack.append(e)
     if(len(stack) != 1):
-        sys.exit("Error 3")
+        sys.exit('\033[91m' + "[ ! ] Invalid number expression" + '\033[0m')
     else:
         e = stack.pop()
         if(not(isinstance(e, Node))):
@@ -485,14 +485,14 @@ def p_empty(p):
     pass
 
 def p_error(p):
-    sys.exit("[ ! ] Syntax error.")
+    sys.exit('\033[91m' + "[ ! ] Syntax error." + '\033[0m')
     pass
 
 parserer = yacc.yacc()
 
 root = parserer.parse(lexer=plylexer.lx, input=open("input.txt").read())
 if root == None:
-    sys.exit("[ ! ] Syntax error.")
+    sys.exit('\033[91m' + "[ ! ] Syntax error." + '\033[0m')
 
 def printChildren(node):
     print(node.type)
