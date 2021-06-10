@@ -30,5 +30,5 @@ The 3AC output is generated into the file ```output.txt```.
 | ; | End of statement |
 | = | Assignation |
 
-![alt text](https://media.tenor.com/images/5bd5282f3ceae2a96a880c3f7c70e8fb/tenor.gif "My friends if I get a 100")
+![alt text](https://media.tenor.com/images/5bd5282f3ceae2a96a880c3f7c70e8fb/tenor.gif "My friends if I get a 100")  
 My friends if I get a 100
